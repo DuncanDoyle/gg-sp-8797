@@ -89,7 +89,7 @@ Port-forwards to the Gloo control plane and retrieves the edge snapshot, then ex
 
 ## Workaround
 
-Use a distinct `RouteOption` per VS route. Creating a new `RouteOption` with a different name results in a fresh proto allocation and avoids the mutation. This was confirmed in the the issue — creating a separate `RouteOption` for the `/ping` route resolved the issue.
+Use a distinct `RouteOption` per VS route. Creating a new `RouteOption` with a different name results in a fresh proto allocation and avoids the mutation — confirmed that creating a separate `RouteOption` for the `/ping` route resolved the issue.
 
 ---
 

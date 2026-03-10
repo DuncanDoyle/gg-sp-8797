@@ -276,8 +276,7 @@ postures.
 
 Conversely, the bug itself is a security risk: unintended policies (e.g. transformations that
 alter auth headers, or permissive CORS) can bleed onto routes that were never meant to have them.
-This is the scenario the customer in [solo-projects#8797](https://github.com/solo-io/solo-projects/issues/8797)
-is hitting.
+This is the scenario reported in [solo-projects#8797](https://github.com/solo-io/solo-projects/issues/8797).
 
 Because both fixing and not fixing carry security implications, the fix should ship with an
 opt-out flag.
