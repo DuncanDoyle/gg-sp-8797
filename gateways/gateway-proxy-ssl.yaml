@@ -1,0 +1,21 @@
+apiVersion: gateway.solo.io/v1
+kind: Gateway
+metadata:
+  labels:
+    app: gloo
+  name: gateway-proxy-ssl
+  namespace: gloo-system
+spec:
+  bindAddress: '::'
+  bindPort: 8443
+  httpGateway: {}
+  options:
+    accessLoggingService:
+      accessLog:
+      - fileSink:
+          path: /dev/stdout
+          stringFormat: ""
+  proxyNames:
+  - gateway-proxy
+  ssl: true
+  useProxyProto: false

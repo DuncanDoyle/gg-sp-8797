@@ -1,0 +1,55 @@
+# VirtualService with two delegating routes.
+#
+# Route 1 (/api): carries inline stagedTransformations + timeout.
+# Route 2 (/ping): no inline options at all.
+#
+# Both routes delegate to RouteTables that reference the SAME shared RouteOption
+# ('simple-rto') via delegateOptions.
+#
+# BUG: The Gloo Edge translation pipeline merges the Route 1 inline options into
+# the shared 'simple-rto' RouteOption proto in place. This causes Route 2 (/ping)
+# to also receive the stagedTransformations and timeout, even though neither the
+# /ping VS route nor its RouteTable configure those options.
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: api-example-com
+  namespace: gloo-system
+  labels:
+    app: httpbin
+spec:
+  virtualHost:
+    domains:
+    - 'api.example.com'
+    routes:
+    # Route 1 — has stagedTransformations + timeout.
+    # These inline options should only apply to /api routes, not leak into /ping.
+    - matchers:
+      - prefix: /api
+      delegateAction:
+        selector:
+          labels:
+            app: api
+          namespaces:
+          - httpbin
+      options:
+        timeout: 180s
+        stagedTransformations:
+          early:
+            responseTransforms:
+            - responseTransformation:
+                transformationTemplate:
+                  body:
+                    text: "VS_STAGED_MARKER: should NOT appear on /ping"
+                  ignoreErrorOnParse: true
+    # Route 2 — no options.
+    # Expected: /ping responses are NOT transformed by the marker above.
+    # Actual (bug): /ping responses ARE transformed because 'simple-rto' was mutated.
+    - matchers:
+      - prefix: /ping
+      delegateAction:
+        selector:
+          labels:
+            app: ping
+          namespaces:
+          - httpbin

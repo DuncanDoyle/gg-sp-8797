@@ -1,0 +1,23 @@
+# This RouteOption is shared between two RouteTables (api-routes and ping-routes).
+# It contains ONLY a simple response header transformation — no stagedTransformations, no timeout.
+#
+# BUG: Gloo Edge's translation pipeline merges VS-level options into this shared RouteOption
+# proto IN PLACE rather than working on a copy. After translation, the edge snapshot shows
+# this RouteOption contaminated with stagedTransformations and timeout from the /api VS route,
+# even though those fields are not present in the Kubernetes resource or the input snapshot.
+#
+# As a result, ALL routes that reference this RouteOption via delegateOptions receive the
+# leaked options — including the /ping route which has no configured stagedTransformations.
+apiVersion: gateway.solo.io/v1
+kind: RouteOption
+metadata:
+  name: simple-rto
+  namespace: httpbin
+spec:
+  options:
+    transformations:
+      responseTransformation:
+        transformationTemplate:
+          headers:
+            x-route-option:
+              text: "simple-rto-applied"

@@ -1,0 +1,23 @@
+# RouteTable for the /api path.
+# Selected by the /api VS route via label selector (app: api).
+# References the shared RouteOption 'simple-rto' via delegateOptions.
+apiVersion: gateway.solo.io/v1
+kind: RouteTable
+metadata:
+  name: api-routes
+  namespace: httpbin
+  labels:
+    app: api
+spec:
+  routes:
+  - matchers:
+    - prefix: /api
+    routeAction:
+      single:
+        upstream:
+          name: httpbin-httpbin-8000
+          namespace: gloo-system
+    optionsConfigRefs:
+      delegateOptions:
+      - name: simple-rto    # <-- shared RouteOption, also referenced by ping-routes
+        namespace: httpbin

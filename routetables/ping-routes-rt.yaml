@@ -1,0 +1,27 @@
+# RouteTable for the /ping path.
+# Selected by the /ping VS route via label selector (app: ping).
+# References the SAME shared RouteOption 'simple-rto' as api-routes.
+#
+# Because the /api VS route carries inline stagedTransformations, the translation
+# pipeline mutates the shared 'simple-rto' RouteOption proto in place.
+# This route therefore also inherits the leaked stagedTransformations — the bug.
+apiVersion: gateway.solo.io/v1
+kind: RouteTable
+metadata:
+  name: ping-routes
+  namespace: httpbin
+  labels:
+    app: ping
+spec:
+  routes:
+  - matchers:
+    - prefix: /ping
+    routeAction:
+      single:
+        upstream:
+          name: httpbin-httpbin-8000
+          namespace: gloo-system
+    optionsConfigRefs:
+      delegateOptions:
+      - name: simple-rto    # <-- same shared RouteOption as api-routes
+        namespace: httpbin
