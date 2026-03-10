@@ -90,3 +90,13 @@ Port-forwards to the Gloo control plane and retrieves the edge snapshot, then ex
 ## Workaround
 
 Use a distinct `RouteOption` per VS route. Creating a new `RouteOption` with a different name results in a fresh proto allocation and avoids the mutation. This was confirmed in the the issue — creating a separate `RouteOption` for the `/ping` route resolved the issue.
+
+---
+
+## Root Cause Analysis
+
+The bug is in [`projects/gateway/pkg/translator/converter.go`](https://github.com/solo-io/gloo/blob/main/projects/gateway/pkg/translator/converter.go). When a route in a RouteTable has no inline options and references a `RouteOption` via `delegateOptions`, the translator assigns the snapshot proto by **direct pointer** rather than cloning it. A subsequent `ShallowMergeRouteOptions` call then writes the parent VS route's inline options into that pointer — permanently mutating the shared snapshot object for the rest of the translation cycle.
+
+The fix is a one-line clone in the nil-options branch of the `delegateOptions` loop. Because the bug involves shared mutable state that some users may unknowingly rely on (e.g. inheriting ExtAuth or CORS from a parent VS route through contamination), the fix should ship behind an env var flag (`GLOO_ISOLATE_DELEGATE_ROUTE_OPTIONS`, defaulting to `true`) with a deprecation path.
+
+See **[ANALYSIS.md](./ANALYSIS.md)** for the full root cause analysis, annotated code walkthrough, fix with code snippets, and feature flag implementation sketch.
